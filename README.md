@@ -4,7 +4,7 @@
 
 *Kieran wants to study the initial mass function of an open cluster in the Large Magellanic Cloud.
 He plans to use the HAWK-I instrument on the VLT and would like to know what the faintest stars are that will be detectable (S/N > 5) with 1 hour of observing time in the K filter.
-He assumes average (50% percentile) observing conditions will apply for the observation*
+He assumes average (50th percentile) observing conditions will apply for the observation*
 
 ### Deliverable:
 The goal of this exercise is to build a -**very**- simple exposure time calculator (ETC) module in Python for the [HAWK-I imager instrument on the VLT](https://www.eso.org/sci/facilities/paranal/instruments/hawki.html).
