@@ -27,10 +27,10 @@ __status__ = "Prototype"
 
 class TestSignalToNoise(TestCase):
     def test_something(self):
-        desired = 7.794
+        desired = 5.1711
 
-        target_counts = 17357.1 * u.electron
-        sky_counts_pp = 165214.43 * u.electron/u.pixel
+        target_counts = 2859.78 * u.electron
+        sky_counts_pp = 165117.59 * u.electron/u.pixel
         dit = 60 * u.s
         n_dit = 60
 

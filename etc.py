@@ -40,9 +40,9 @@ def _noise(target_counts, sky_counts_pp, dit):
     dark_current = .01 * u.electron/u.pixel/u.s
 
     # HACK: The pixel number below is most likely calculated from the PSF by
-    #       official ESO HAWK-I ETC using a Image Quality FWHM of 2.43 arcsec.
+    #       official ESO HAWK-I ETC using a Image Quality FWHM of 0.6 arcsec.
     #       It has been fixed for the scope of this project.
-    n_pixel = 1637 * u.pixel
+    n_pixel = 101 * u.pixel
 
     dark = dark_current * dit
     readout = read_out_noise.value**2 * u.electron/u.pixel
@@ -89,7 +89,7 @@ aperture = 8.2 * u.m  # VLT aperture
 aperture_area = np.pi/4 * (aperture**2)
 pixel_scale = 4*2048*2048*u.pixel / aperture_area
 
-flux = hmbp.for_flux_in_filter(flux=21*u.mag, **defaults)
+flux = hmbp.for_flux_in_filter(flux=22*u.mag, **defaults)
 sky = create_sky(pixel_scale)
 target_counts = _to_electrons(flux, dit, aperture_area)
 print(target_counts)
