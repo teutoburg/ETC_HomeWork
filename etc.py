@@ -89,7 +89,6 @@ aperture = 8.2 * u.m  # VLT aperture
 aperture_area = np.pi/4 * (aperture**2)
 pixel_scale = 4*2048*2048*u.pixel / aperture_area
 
-
 flux = hmbp.for_flux_in_filter(flux=21*u.mag, **defaults)
 sky = create_sky(pixel_scale)
 target_counts = _to_electrons(flux, dit, aperture_area)
