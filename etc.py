@@ -95,4 +95,3 @@ sky = create_sky(pixel_scale)
 target_counts = _to_electrons(flux, dit, aperture_area)
 print(target_counts)
 print(signal_to_noise(target_counts, sky, dit, n_dit))
-
