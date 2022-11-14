@@ -16,6 +16,7 @@ __version__ = "0.2"
 import numpy as np
 
 from astropy import units as u
+from astropy.units import Quantity
 
 import hmbp
 
@@ -39,12 +40,12 @@ class HawkiEtc():
         pass
 
     @property
-    def aperture_area(self):
+    def aperture_area(self) -> Quantity[u.m**2]:
         """Aperture area of the telescope. Read-only property."""
         return 0.785398 * (self.aperture**2)  # pi/4 -> circle area
 
     @property
-    def pixel_scale(self):
+    def pixel_scale(self) -> Quantity[u.pixel/u.m**2]:
         """Pixel scale of the telescope. Read-only property."""
         return 4*2048*2048*u.pixel / self.aperture_area
 
@@ -68,7 +69,9 @@ class HawkiEtc():
 
         return np.sqrt(target_counts + background)
 
-    def signal_to_noise(self, target_counts, sky_counts_pp, dit, n_dit):
+    def signal_to_noise(self, target_counts: Quantity[u.electron],
+                        sky_counts_pp: Quantity[u.electron/u.pixel],
+                        dit: Quantity[u.s], n_dit: int) -> float:
         """
         Calculate S/N ratio for given target and sky counts and exposure time.
 
@@ -77,9 +80,9 @@ class HawkiEtc():
         Parameters
         ----------
         target_counts : astropy.Quantity
-            DESCRIPTION.
+            Total electron count from source per DIT.
         sky_counts_pp : astropy.Quantity
-            DESCRIPTION.
+            Total electron count per pixel from sky background per DIT.
         dit : astropy.Quantity
             Detector integration time in seconds.
         n_dit : int
@@ -87,24 +90,27 @@ class HawkiEtc():
 
         Returns
         -------
-        TYPE
-            DESCRIPTION.
+        s_n : float
+            Signal/noise ratio (dimensionless).
 
         """
         signal = np.sqrt(n_dit) * target_counts
         noise = self._get_noise(target_counts, sky_counts_pp, dit)
-        return (signal / noise).value
+        s_n = float((signal / noise).value)
+        return s_n
 
-    @staticmethod
-    def _to_electrons(flux, dit, aperture_area):
+    def _to_electrons(self, flux: Quantity[u.photon/u.s/u.m**(-2)],
+                      dit: Quantity[u.s]) -> Quantity[u.electron]:
         # HACK: The following conversion factor has been derived to match the
         #       values to those produced by the official ESO HAWK-I ETC, it
         #       has no physical derivation! When used with AB magnitudes,
         #       the factor is closer to 0.4...
         eff = .3581 * u.electron / u.photon
-        return flux * dit * aperture_area * eff
+        counts = flux * dit * self.aperture_area * eff
+        return counts
 
-    def create_sky(self, pixel_scale, dit, **kwargs):
+    def create_sky(self, dit: Quantity[u.s],
+                   **kwargs) -> Quantity[u.electron/u.pixel]:
         """
         Estimate number of electrons per pixel expected from sky background.
 
@@ -114,7 +120,7 @@ class HawkiEtc():
             Pixel scale of the optical system in pixel per square meter.
         dit : astropy.Quantity
             Detector integration time in seconds.
-        **kwargs : TYPE
+        **kwargs : dict
             DESCRIPTION.
 
         Returns
@@ -134,16 +140,18 @@ class HawkiEtc():
                       "therm_e3": 0.01}
         parameters = defaults | therm_dict | kwargs
         sky = hmbp.in_skycalc_background(**parameters)
-        return sky * dit / pixel_scale * u.electron/u.photon
+        sky_count = sky * dit / self.pixel_scale * u.electron/u.photon
+        return sky_count
 
 
-# dit = 60 * u.s
-# n_dit = 60
+dit = 60 * u.s
+n_dit = 60
 
-# assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
+assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
 
-# flux = hmbp.for_flux_in_filter(flux=22*u.mag, **defaults)
-# sky = create_sky(pixel_scale)
-# target_counts = _to_electrons(flux, dit, aperture_area)
-# print(target_counts)
-# print(signal_to_noise(target_counts, sky, dit, n_dit))
+calc = HawkiEtc()
+flux = hmbp.for_flux_in_filter(flux=22*u.mag, **calc.default_kwargs)
+sky = calc.create_sky(dit)
+target_counts = calc._to_electrons(flux, dit)
+print(target_counts)
+print(calc.signal_to_noise(target_counts, sky, dit, n_dit))
