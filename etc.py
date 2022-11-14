@@ -3,6 +3,8 @@
 """
 TBA.
 
+Requires at least Python 3.9 for correct type hints with Astropy Quantities!
+
 Note: The HAWKI instrument has no K filter, only Ks, so I assumed that the
       UX text was referring to the Ks filter and not K.
 
@@ -14,11 +16,15 @@ Created on Fri Nov 11 14:34:00 2022
 __version__ = "0.2"
 
 import numpy as np
+from functools import lru_cache
 
+from scipy.optimize import fsolve
 from astropy import units as u
 from astropy.units import Quantity
 
 import hmbp
+
+from utils import HiddenPrints
 
 __author__ = "Fabian Haberhauer"
 __copyright__ = "Copyright 2022"
@@ -68,7 +74,6 @@ class HawkiEtc():
         readout = read_out_noise.value**2 * u.electron/u.pixel
         background = drs_factor * n_pixel * (sky_counts_pp + dark + readout)
         noise = target_counts + background
-        print(noise.unit)
         return noise
 
     def signal_to_noise(self, target_counts: Quantity[u.electron],
@@ -95,7 +100,7 @@ class HawkiEtc():
         Raises
         ------
         ValueError
-            Raised when `dit` or `n_dit` are outside the allowed range.
+            Raised if `dit` or `n_dit` are outside the allowed range.
 
         Returns
         -------
@@ -123,6 +128,7 @@ class HawkiEtc():
         counts = flux * dit * self.aperture_area * eff
         return counts
 
+    @lru_cache
     def create_sky(self, dit: Quantity[u.s],
                    **kwargs) -> Quantity[u.electron/u.pixel]:
         """
@@ -137,6 +143,11 @@ class HawkiEtc():
         **kwargs : dict
             DESCRIPTION.
 
+        Raises
+        ------
+        ValueError
+            Raised if `dit` is outside the allowed range.
+
         Returns
         -------
         sky_count : astropy.Quantity
@@ -145,6 +156,8 @@ class HawkiEtc():
         """
         # TODO: investigate if this could be sped up by a decorator storing the
         #       output of last few calls for given parameters...
+        if dit < 10 * u.s:
+            raise ValueError("DIT must be at least 10 s for NDR.")
         defaults = {"filter_name": "Ks",
                     "instrument": "HAWKI",
                     "observatory": "Paranal",
@@ -159,11 +172,33 @@ class HawkiEtc():
 
     def sn_for_mag(self, mag: Quantity[u.mag],
                    dit: Quantity[u.s], n_dit: int) -> float:
+        mag = mag << u.mag
         sky_counts_pp = self.create_sky(dit)
         flux = hmbp.for_flux_in_filter(flux=mag, **calc.default_kwargs)
         target_counts = self._to_electrons(flux, dit)
+        print(target_counts)
         s_n = self.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
         return s_n
+
+    def _sn_for_mag_for_root(self, mag: Quantity[u.mag],
+                             dit: Quantity[u.s], n_dit: int,
+                             limit_sn: float = 5.) -> float:
+        mag = mag << u.mag
+        # print(mag)
+        mag = mag[0]
+        with HiddenPrints():
+            sky_counts_pp = self.create_sky(dit)
+        flux = hmbp.for_flux_in_filter(flux=mag, **calc.default_kwargs)
+        target_counts = self._to_electrons(flux, dit)
+        s_n = self.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
+        s_n -= limit_sn
+        return s_n
+
+    def mag_for_sn(self, s_n: float,
+                   dit: Quantity[u.s], n_dit: int) -> Quantity[u.mag]:
+        mag = fsolve(self._sn_for_mag_for_root, 20, (dit, n_dit, s_n))[0]
+        mag = mag << u.mag
+        return mag
 
 
 if __name__ == "__main__":
@@ -172,5 +207,7 @@ if __name__ == "__main__":
     # assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
 
     calc = HawkiEtc()
-    sn = calc.sn_for_mag(22*u.mag, 60*u.s, 60)
+    sn = calc.sn_for_mag(19.5*u.mag, 60*u.s, 60)
     print(sn)
+    limmag = calc.mag_for_sn(50., 60*u.s, 60)
+    print(limmag)
