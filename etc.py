@@ -171,7 +171,6 @@ class HawkiEtc():
         sky_counts_pp = self.create_sky(dit)
         flux = hmbp.for_flux_in_filter(flux=mag, **calc.default_kwargs)
         target_counts = self._to_electrons(flux, dit)
-        print(target_counts)
         s_n = self.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
         return s_n
 
@@ -179,7 +178,6 @@ class HawkiEtc():
                              dit: Quantity[u.s], n_dit: int,
                              limit_sn: float = 5.) -> float:
         mag = mag << u.mag
-        # print(mag)
         mag = mag[0]
         with HiddenPrints():
             sky_counts_pp = self.create_sky(dit)
@@ -197,12 +195,18 @@ class HawkiEtc():
 
 
 if __name__ == "__main__":
-    # dit = 60 * u.s
-    # n_dit = 60
-    # assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
+    dit = 60 * u.s  # in seconds, needs Quantity
+    n_dit = 60  # simple integer
+    assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
 
-    calc = HawkiEtc()
-    sn = calc.sn_for_mag(19.5*u.mag, 60*u.s, 60)
-    print(sn)
-    limmag = calc.mag_for_sn(50., 60*u.s, 60)
-    print(limmag)
+    calc = HawkiEtc()  # create ETC instance
+
+    # Calculate S/N ratio from given magnitude:
+    lim_mag = 21*u.mag  # only Vega mags currently fully supported!
+    sn_ratio = calc.sn_for_mag(lim_mag, dit, n_dit)
+    print(f"S/N: {sn_ratio:.2f}")  # formatted printing
+
+    # Calculate limiting magnitude from given S/N ratio:
+    sn_ratio = 5.0  # dimensionless
+    lim_mag = calc.mag_for_sn(sn_ratio, dit, n_dit)
+    print(f"{lim_mag:.2f}")  # formatted printing
