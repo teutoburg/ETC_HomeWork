@@ -39,9 +39,7 @@ class HawkiEtc():
                       "instrument": "HAWKI",
                       "observatory": "Paranal"}
     aperture = aperture = 8.2 * u.m  # VLT aperture
-
-    def __init__(self):
-        pass
+    pixels = 4*2048*2048 * u.pixel  # HAWK-I detector pixel amount
 
     @property
     def aperture_area(self) -> Quantity[u.m**2]:
@@ -51,7 +49,7 @@ class HawkiEtc():
     @property
     def pixel_scale(self) -> Quantity[u.pixel/u.m**2]:
         """Pixel scale of the telescope. Read-only property."""
-        return 4*2048*2048*u.pixel / self.aperture_area
+        return self.pixels / self.aperture_area
 
     @staticmethod
     def _get_noise(target_counts: Quantity[u.electron],
