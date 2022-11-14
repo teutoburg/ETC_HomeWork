@@ -21,9 +21,6 @@ import etc
 
 class TestSignalToNoise(TestCase):
     def setUp(self):
-        aperture = 8.2 * u.m  # VLT aperture
-        aperture_area = 0.785398 * (aperture**2)
-        self.pixel_scale = 4*2048*2048*u.pixel / aperture_area
         self.dit = 60 * u.s
         self.etc = etc.HawkiEtc()
 
@@ -41,9 +38,6 @@ class TestSignalToNoise(TestCase):
 
 class TestSky(TestCase):
     def setUp(self):
-        aperture = 8.2 * u.m  # VLT aperture
-        aperture_area = 0.785398 * (aperture**2)
-        self.pixel_scale = 4*2048*2048*u.pixel / aperture_area
         self.dit = 60 * u.s
         self.etc = etc.HawkiEtc()
 
@@ -56,12 +50,12 @@ class TestSky(TestCase):
 
     def test_value(self):
         desired = 165117.562
-        actual = self.etc.create_sky(self.pixel_scale, self.dit).value
+        actual = self.etc.create_sky(self.etc.pixel_scale, self.dit).value
         self.assertAlmostEqual(desired, actual, 3)
 
     def test_units(self):
         desired = u.Unit("electron / pix")
-        actual = self.etc.create_sky(self.pixel_scale, self.dit).unit
+        actual = self.etc.create_sky(self.etc.pixel_scale, self.dit).unit
         self.assertEqual(desired, actual)
 
 
