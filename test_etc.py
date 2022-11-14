@@ -63,5 +63,8 @@ class TestSky(TestCase):
         self.assertEqual(desired, actual)
 
 
+# TODO: add tests for final sn from mag and mag from sn
+# TODO: are we missing any other tests??
+
 if __name__ == "__main__":
     main()
