@@ -29,7 +29,6 @@ __email__ = "fabian.haberhauer@univie.ac.at"
 __status__ = "Prototype"
 
 
-
 class HawkiEtc():
     default_kwargs = {"filter_name": "Ks",
                       "instrument": "HAWKI",
@@ -50,7 +49,9 @@ class HawkiEtc():
         return 4*2048*2048*u.pixel / self.aperture_area
 
     @staticmethod
-    def _get_noise(target_counts, sky_counts_pp, dit):
+    def _get_noise(target_counts: Quantity[u.electron],
+                   sky_counts_pp: Quantity[u.electron/u.pixel],
+                   dit: Quantity[u.s]) -> Quantity[u.electron]:
         # HACK: The following factors are directly taken from ESO HAWK-I ETC
         drs_factor = 1.1
         read_out_noise = 5 * u.electron/u.pixel  # per DIT
@@ -66,8 +67,9 @@ class HawkiEtc():
         dark = dark_current * dit
         readout = read_out_noise.value**2 * u.electron/u.pixel
         background = drs_factor * n_pixel * (sky_counts_pp + dark + readout)
-
-        return np.sqrt(target_counts + background)
+        noise = target_counts + background
+        print(noise.unit)
+        return noise
 
     def signal_to_noise(self, target_counts: Quantity[u.electron],
                         sky_counts_pp: Quantity[u.electron/u.pixel],
@@ -84,9 +86,16 @@ class HawkiEtc():
         sky_counts_pp : astropy.Quantity
             Total electron count per pixel from sky background per DIT.
         dit : astropy.Quantity
-            Detector integration time in seconds.
+            Detector integration time in seconds, must be >= 10 s for non-
+            destructive reading (NDR) as per the official ESO HAWK-I
+            instrument description.
         n_dit : int
-            Number of integrations.
+            Number of integrations, must be >= 1.
+
+        Raises
+        ------
+        ValueError
+            Raised when `dit` or `n_dit` are outside the allowed range.
 
         Returns
         -------
@@ -94,8 +103,13 @@ class HawkiEtc():
             Signal/noise ratio (dimensionless).
 
         """
+        if dit < 10 * u.s:
+            raise ValueError("DIT must be at least 10 s for NDR.")
+        if n_dit < 1:
+            raise ValueError("NDIT must be at least 1.")
+
         signal = np.sqrt(n_dit) * target_counts
-        noise = self._get_noise(target_counts, sky_counts_pp, dit)
+        noise = (self._get_noise(target_counts, sky_counts_pp, dit))**(1/2)
         s_n = float((signal / noise).value)
         return s_n
 
@@ -143,15 +157,20 @@ class HawkiEtc():
         sky_count = sky * dit / self.pixel_scale * u.electron/u.photon
         return sky_count
 
+    def sn_for_mag(self, mag: Quantity[u.mag],
+                   dit: Quantity[u.s], n_dit: int) -> float:
+        sky_counts_pp = self.create_sky(dit)
+        flux = hmbp.for_flux_in_filter(flux=mag, **calc.default_kwargs)
+        target_counts = self._to_electrons(flux, dit)
+        s_n = self.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
+        return s_n
 
-dit = 60 * u.s
-n_dit = 60
 
-assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
+if __name__ == "__main__":
+    # dit = 60 * u.s
+    # n_dit = 60
+    # assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
 
-calc = HawkiEtc()
-flux = hmbp.for_flux_in_filter(flux=22*u.mag, **calc.default_kwargs)
-sky = calc.create_sky(dit)
-target_counts = calc._to_electrons(flux, dit)
-print(target_counts)
-print(calc.signal_to_noise(target_counts, sky, dit, n_dit))
+    calc = HawkiEtc()
+    sn = calc.sn_for_mag(22*u.mag, 60*u.s, 60)
+    print(sn)
