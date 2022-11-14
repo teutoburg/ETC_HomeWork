@@ -13,9 +13,8 @@ Created on Fri Nov 11 14:34:00 2022
 @author: teutoburg
 """
 
-__version__ = "0.2"
+__version__ = "0.3"
 
-import numpy as np
 from functools import lru_cache
 
 from scipy.optimize import fsolve
@@ -113,7 +112,7 @@ class HawkiEtc():
         if n_dit < 1:
             raise ValueError("NDIT must be at least 1.")
 
-        signal = np.sqrt(n_dit) * target_counts
+        signal = n_dit**(1/2) * target_counts
         noise = (self._get_noise(target_counts, sky_counts_pp, dit))**(1/2)
         s_n = float((signal / noise).value)
         return s_n
@@ -154,8 +153,6 @@ class HawkiEtc():
             Sky level in electrons per pixel.
 
         """
-        # TODO: investigate if this could be sped up by a decorator storing the
-        #       output of last few calls for given parameters...
         if dit < 10 * u.s:
             raise ValueError("DIT must be at least 10 s for NDR.")
         defaults = {"filter_name": "Ks",
