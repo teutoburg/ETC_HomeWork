@@ -10,13 +10,12 @@ Created on Sat Nov 12 16:30:00 2022
 
 __version__ = "0.2"
 
-import sys
-import os
 from unittest import main, TestCase
 
 from astropy import units as u
 
 import etc
+from utils import HiddenPrints
 
 
 class TestSignalToNoise(TestCase):
@@ -51,21 +50,16 @@ class TestSky(TestCase):
         self.dit = 60 * u.s
         self.etc = etc.HawkiEtc()
 
-        # To silence hmbp internal printing
-        sys.stdout = open(os.devnull, 'w')
-
-    def tearDown(self):
-        # Restore printing...
-        sys.stdout = sys.__stdout__
-
     def test_value(self):
         desired = 165117.562
-        actual = self.etc.create_sky(self.dit).value
+        with HiddenPrints():
+            actual = self.etc.create_sky(self.dit).value
         self.assertAlmostEqual(desired, actual, 3)
 
     def test_units(self):
         desired = u.Unit("electron / pix")
-        actual = self.etc.create_sky(self.dit).unit
+        with HiddenPrints():
+            actual = self.etc.create_sky(self.dit).unit
         self.assertEqual(desired, actual)
 
 
