@@ -18,14 +18,6 @@ from astropy import units as u
 
 import etc
 
-__author__ = "Fabian Haberhauer"
-__copyright__ = "Copyright 2022"
-__credits__ = []
-__license__ = "GPL"
-__maintainer__ = "Fabian Haberhauer"
-__email__ = "fabian.haberhauer@univie.ac.at"
-__status__ = "Prototype"
-
 
 class TestSignalToNoise(TestCase):
     def test_something(self):
