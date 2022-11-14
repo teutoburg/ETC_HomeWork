@@ -28,14 +28,25 @@ __email__ = "fabian.haberhauer@univie.ac.at"
 __status__ = "Prototype"
 
 
-defaults = {"filter_name": "Ks",
-            "instrument": "HAWKI",
-            "observatory": "Paranal"}
-
 
 class HawkiEtc():
+    default_kwargs = {"filter_name": "Ks",
+                      "instrument": "HAWKI",
+                      "observatory": "Paranal"}
+    aperture = aperture = 8.2 * u.m  # VLT aperture
+
     def __init__(self):
         pass
+
+    @property
+    def aperture_area(self):
+        """Aperture area of the telescope. Read-only property."""
+        return 0.785398 * (self.aperture**2)  # pi/4 -> circle area
+
+    @property
+    def pixel_scale(self):
+        """Pixel scale of the telescope. Read-only property."""
+        return 4*2048*2048*u.pixel / self.aperture_area
 
     @staticmethod
     def _get_noise(target_counts, sky_counts_pp, dit):
@@ -130,10 +141,6 @@ class HawkiEtc():
 # n_dit = 60
 
 # assert dit * n_dit == 1 * u.h  # total observing time should be 1 h
-
-# aperture = 8.2 * u.m  # VLT aperture
-# aperture_area = 0.785398 * (aperture**2)  # pi/4 -> circle area
-# pixel_scale = 4*2048*2048*u.pixel / aperture_area
 
 # flux = hmbp.for_flux_in_filter(flux=22*u.mag, **defaults)
 # sky = create_sky(pixel_scale)

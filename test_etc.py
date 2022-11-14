@@ -20,7 +20,14 @@ import etc
 
 
 class TestSignalToNoise(TestCase):
-    def test_something(self):
+    def setUp(self):
+        aperture = 8.2 * u.m  # VLT aperture
+        aperture_area = 0.785398 * (aperture**2)
+        self.pixel_scale = 4*2048*2048*u.pixel / aperture_area
+        self.dit = 60 * u.s
+        self.etc = etc.HawkiEtc()
+
+    def test_sn(self):
         desired = 5.1711
 
         target_counts = 2859.78 * u.electron
@@ -28,7 +35,7 @@ class TestSignalToNoise(TestCase):
         dit = 60 * u.s
         n_dit = 60
 
-        actual = etc.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
+        actual = self.etc.signal_to_noise(target_counts, sky_counts_pp, dit, n_dit)
         self.assertAlmostEqual(desired, actual, 3)
 
 
@@ -38,6 +45,7 @@ class TestSky(TestCase):
         aperture_area = 0.785398 * (aperture**2)
         self.pixel_scale = 4*2048*2048*u.pixel / aperture_area
         self.dit = 60 * u.s
+        self.etc = etc.HawkiEtc()
 
         # To silence hmbp internal printing
         sys.stdout = open(os.devnull, 'w')
@@ -48,12 +56,12 @@ class TestSky(TestCase):
 
     def test_value(self):
         desired = 165117.562
-        actual = etc.create_sky(self.pixel_scale, self.dit).value
+        actual = self.etc.create_sky(self.pixel_scale, self.dit).value
         self.assertAlmostEqual(desired, actual, 3)
 
     def test_units(self):
         desired = u.Unit("electron / pix")
-        actual = etc.create_sky(self.pixel_scale, self.dit).unit
+        actual = self.etc.create_sky(self.pixel_scale, self.dit).unit
         self.assertEqual(desired, actual)
 
 
