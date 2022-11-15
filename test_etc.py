@@ -62,6 +62,29 @@ class TestSky(TestCase):
             actual = self.etc.create_sky(self.dit).unit
         self.assertEqual(desired, actual)
 
+    def test_invalid_dit(self):
+        self.assertRaises(ValueError, self.etc.create_sky, 3 * u.s)
+
+
+class TestElectrons(TestCase):
+    def setUp(self):
+        self.dit = 60 * u.s
+        self.etc = etc.HawkiEtc()
+
+    def test_value(self):
+        fluxes = (2.52, 15.9, 100.3) * u.photon/u.s/u.m**2
+        desireds = (2859., 18041., 113808.)
+        for flux, desired in zip(fluxes, desireds):
+            with self.subTest():
+                actual = self.etc._to_electrons(flux, self.dit).value
+                self.assertAlmostEqual(desired, actual, 0)
+
+    def test_units(self):
+        desired = u.Unit("electron")
+        actual = self.etc._to_electrons(2.52 * u.photon/u.s/u.m**2,
+                                        self.dit).unit
+        self.assertEqual(desired, actual)
+
 
 # TODO: add tests for final sn from mag and mag from sn
 # TODO: are we missing any other tests??
