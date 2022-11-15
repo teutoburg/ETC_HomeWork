@@ -8,7 +8,7 @@ Created on Sat Nov 12 16:30:00 2022
 @author: teutoburg
 """
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 from unittest import main, TestCase
 
@@ -86,7 +86,34 @@ class TestElectrons(TestCase):
         self.assertEqual(desired, actual)
 
 
-# TODO: add tests for final sn from mag and mag from sn
+class TestSnMag(TestCase):
+    def setUp(self):
+        self.dit = 60 * u.s
+        self.n_dit = 60
+        self.etc = etc.HawkiEtc()
+
+    def test_value(self):
+        desired = 12.99
+        lim_mag = 21 * u.mag
+        with HiddenPrints():
+            actual = self.etc.sn_for_mag(lim_mag, self.dit, self.n_dit)
+        self.assertAlmostEqual(desired, actual, 2)
+
+
+class TestMagSn(TestCase):
+    def setUp(self):
+        self.dit = 60 * u.s
+        self.n_dit = 60
+        self.etc = etc.HawkiEtc()
+
+    def test_value(self):
+        desired = 22.04
+        s_n = 5.0
+        with HiddenPrints():
+            actual = self.etc.mag_for_sn(s_n, self.dit, self.n_dit).value
+        self.assertAlmostEqual(desired, actual, 2)
+
+
 # TODO: are we missing any other tests??
 
 if __name__ == "__main__":
