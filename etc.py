@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-TBA.
+Exposure Time Calculator.
+
+Provides the ``HawkiEtc`` class, a simplified Exposure Time Calculator for the
+ESO HAWK-I instrument. For useage and limitations please refer to the class and
+methods documentations.
 
 Requires at least Python 3.9 for correct type hints with Astropy Quantities!
 

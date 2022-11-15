@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-TBA.
+Test suite for etc.
 
 Created on Sat Nov 12 16:30:00 2022
 
